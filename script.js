@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userChatId = urlParams.get('chat_id'); 
 
     // ВСТАВЬТЕ СЮДА ТОКЕН ВАШЕГО БОТА
-    const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА_ОТ_BOTFATHER'; 
+    const TELEGRAM_BOT_TOKEN = 8916450465:AAEkiiKXYzrK2guI55uIdJC7s_iMXEwjAeA; 
 
     let prizes = [];
     
