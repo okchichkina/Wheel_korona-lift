@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Розыгрыш мерча</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="roulette-window">
+            <div class="selection-line"></div>
+            <div class="roulette-tape" id="roulette-tape"></div>
+        </div>
+        
+        <button class="spin-btn" id="spin-btn">КРУТИТЬ</button>
+    </div>
+
+    <div class="overlay" id="overlay">
+        <button class="close-btn" id="close-btn">&times;</button>
+        
+        <div class="result-content">
+            <h2 class="result-title">ВАШ ПРИЗ</h2>
+            <img src="" alt="Приз" class="result-image" id="result-image">
+            <h3 class="result-name" id="result-name"></h3>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
