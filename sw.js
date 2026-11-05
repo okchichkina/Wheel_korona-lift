@@ -9,7 +9,6 @@ const ASSETS_TO_CACHE = [
     './images/2.png',
     './images/3.png',
     './images/4.png',
-    './images/5.png',
     './images/icon-192.png'
 ];
 
