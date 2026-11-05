@@ -1,14 +1,16 @@
-const CACHE_NAME = 'wheel-offline-v2';
+const CACHE_NAME = 'wheel-offline-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './style.css',
     './script.js',
     './prizes.json',
+    './manifest.json',
     './images/1.png',
     './images/2.png',
     './images/3.png',
     './images/4.png',
+    './images/5.png',
     './images/icon-192.png'
 ];
 

@@ -11,13 +11,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultName = document.getElementById('result-name');
     
     const ITEM_HEIGHT = 150;
+    const WINDOW_HEIGHT = 300;
+    const START_OFFSET = (WINDOW_HEIGHT - ITEM_HEIGHT) / 2;
     
     const urlParams = new URLSearchParams(window.location.search);
     const isIPadMode = window.matchMedia('(display-mode: standalone)').matches || urlParams.has('ipad');
     const userChatId = urlParams.get('chat_id'); 
 
     // ВСТАВЬТЕ СЮДА ТОКЕН ВАШЕГО БОТА
-    const TELEGRAM_BOT_TOKEN = 'токен бота'; 
+    const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА_ОТ_BOTFATHER';
 
     let prizes = [];
     
@@ -129,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncWithServer();
 
         const winningElementIndex = (prizes.length * (tapeLength - 1)) + winnerIndex;
-        const offset = (winningElementIndex * ITEM_HEIGHT) - (150 / 2) + (ITEM_HEIGHT / 2);
+        const offset = (winningElementIndex * ITEM_HEIGHT) - (WINDOW_HEIGHT / 2) + (ITEM_HEIGHT / 2);
         const randomOffset = Math.floor(Math.random() * 40) - 20;
 
         tape.style.transform = `translateY(-${offset + randomOffset}px)`;
@@ -144,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         overlay.classList.remove('active');
         btn.classList.remove('hidden');
         tape.style.transition = 'none';
-        tape.style.transform = 'translateY(0px)';
+        tape.style.transform = `translateY(${START_OFFSET}px)`;
         setTimeout(() => {
             tape.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.2, 1)';
         }, 50);
