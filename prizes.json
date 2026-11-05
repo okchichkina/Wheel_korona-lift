@@ -2,6 +2,6 @@
   { "id": "thermomug", "name": "ТЕРМОКРУЖКА", "amount": 50, "weight": 0.5, "image": "images/1.png" },
   { "id": "notebook", "name": "БЛОКНОТ", "amount": 1000, "weight": 1.0, "image": "images/2.png" },
   { "id": "umbrella", "name": "ЗОНТ", "amount": 100, "weight": 0.3, "image": "images/3.png" },
-  { "id": "mug", "name": "КРУЖКА", "amount": 200, "weight": 0.8, "image": "images/4.png" }
+  { "id": "mug", "name": "КРУЖКА", "amount": 200, "weight": 0.8, "image": "images/4.png" },
   { "id": "pen", "name": "РУЧКА", "amount": 600, "weight": 1.0, "image": "images/5.png" }
 ]
