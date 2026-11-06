@@ -10,9 +10,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resultImg = document.getElementById('result-image');
     const resultName = document.getElementById('result-name');
     
-    const ITEM_HEIGHT = 150;
-    const WINDOW_HEIGHT = 300;
-    const START_OFFSET = (WINDOW_HEIGHT - ITEM_HEIGHT) / 2;
+    const windowEl = document.querySelector('.roulette-window');
+    // Размеры считаются из реального размера окна: один приз = высота окна
+    let WINDOW_HEIGHT = 300;
+    let ITEM_HEIGHT = 300;
+    let START_OFFSET = 0;
+    let spinning = false;
+
+    function updateSizes() {
+        WINDOW_HEIGHT = windowEl.clientHeight;
+        ITEM_HEIGHT = WINDOW_HEIGHT;
+        START_OFFSET = (WINDOW_HEIGHT - ITEM_HEIGHT) / 2;
+        document.documentElement.style.setProperty('--item-h', ITEM_HEIGHT + 'px');
+    }
+
+    function resetTape() {
+        tape.style.transition = 'none';
+        tape.style.transform = `translateY(${START_OFFSET}px)`;
+        void tape.offsetHeight;
+        tape.style.transition = '';
+    }
+
+    function relayout() {
+        if (spinning) return;
+        updateSizes();
+        resetTape();
+    }
+    window.addEventListener('resize', relayout);
+    window.addEventListener('orientationchange', () => setTimeout(relayout, 200));
     
     const urlParams = new URLSearchParams(window.location.search);
     const isIPadMode = window.matchMedia('(display-mode: standalone)').matches || urlParams.has('ipad');
@@ -25,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
     // сбросится старый остаток и подтянется новый список призов.
-    const PRIZES_VERSION = '2';
+    const PRIZES_VERSION = '3';
 
     if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
         localStorage.removeItem('localPrizes');
@@ -40,6 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const res = await fetch('prizes.json', { cache: 'no-cache' });
             prizes = await res.json();
+            // Запоминаем стартовое количество: шанс приза считается от него и не меняется по мере раздачи
+            prizes.forEach(p => { p.initialAmount = p.amount; });
             localStorage.setItem('localPrizes', JSON.stringify(prizes));
         } catch (error) {
             console.error('Ошибка загрузки', error);
@@ -61,6 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     renderTape();
+    updateSizes();
+    resetTape();
 
     function showWinner(winner) {
         resultImg.src = winner.image;
@@ -120,11 +149,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const available = prizes.filter(p => p.amount > 0);
         if (available.length === 0) return 0;
         
-        const totalWeight = available.reduce((sum, p) => sum + (p.amount * p.weight), 0);
+        // Шанс = стартовое количество × вес. Он постоянный: когда блокноты убывают,
+        // шансы редких призов НЕ растут. Закончившийся приз просто исключается.
+        const chance = p => (p.initialAmount ?? p.amount) * p.weight;
+        const totalWeight = available.reduce((sum, p) => sum + chance(p), 0);
         let randomValue = Math.random() * totalWeight;
 
         for (let i = 0; i < available.length; i++) {
-            randomValue -= (available[i].amount * available[i].weight);
+            randomValue -= chance(available[i]);
             if (randomValue <= 0) return prizes.findIndex(p => p.id === available[i].id);
         }
         return 0;
@@ -132,6 +164,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btn.addEventListener('click', () => {
         btn.classList.add('hidden');
+        spinning = true;
+        updateSizes();
         const winnerIndex = getWinnerIndex();
         const winner = prizes[winnerIndex];
         
@@ -142,7 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const winningElementIndex = (prizes.length * (tapeLength - 1)) + winnerIndex;
         const offset = (winningElementIndex * ITEM_HEIGHT) - (WINDOW_HEIGHT / 2) + (ITEM_HEIGHT / 2);
-        const randomOffset = Math.floor(Math.random() * 40) - 20;
+        const randomOffset = Math.floor((Math.random() - 0.5) * ITEM_HEIGHT * 0.1);
 
         tape.style.transform = `translateY(-${offset + randomOffset}px)`;
 
@@ -155,10 +189,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     closeBtn.addEventListener('click', () => {
         overlay.classList.remove('active');
         btn.classList.remove('hidden');
-        tape.style.transition = 'none';
-        tape.style.transform = `translateY(${START_OFFSET}px)`;
-        setTimeout(() => {
-            tape.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.2, 1)';
-        }, 50);
+        spinning = false;
+        updateSizes();
+        resetTape();
     });
 });

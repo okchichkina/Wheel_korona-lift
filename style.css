@@ -47,7 +47,7 @@ body::before {
 
 .app-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 480px;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -56,9 +56,10 @@ body::before {
     padding: 20px;
 }
 
+/* Вертикальная ориентация (телефон, планшет): окно вытянуто вверх */
 .roulette-window {
     width: 100%;
-    height: 300px;
+    height: clamp(380px, 62dvh, 680px);
     position: relative;
     overflow: hidden;
     background: #fff;
@@ -66,40 +67,73 @@ body::before {
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
+/* Горизонтальная ориентация (десктоп, телефон и планшет в ландшафте): окно шире */
+@media (orientation: landscape) {
+    .app-container {
+        max-width: 900px;
+        padding: 12px 20px;
+    }
+    .roulette-window {
+        height: clamp(200px, 58dvh, 460px);
+    }
+}
+
 .roulette-window::before, .roulette-window::after {
     content: '';
     position: absolute;
     left: 0;
     width: 100%;
-    height: 60px;
+    height: 6%;
     z-index: 2;
     pointer-events: none;
 }
 .roulette-window::before { top: 0; background: linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%); }
 .roulette-window::after { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 100%); }
 
+/* Два треугольника-указателя слева и справа вместо линии */
 .selection-line {
+    --tri: clamp(12px, 2.6dvh, 22px);
     position: absolute;
     top: 50%;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background-color: #B28B44; 
-    transform: translateY(-50%);
+    left: 0;
+    right: 0;
+    height: 0;
     z-index: 3;
-    opacity: 0.5;
+    pointer-events: none;
+}
+.selection-line::before, .selection-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 0;
+    height: 0;
+    transform: translateY(-50%);
+    border-top: var(--tri) solid transparent;
+    border-bottom: var(--tri) solid transparent;
+}
+.selection-line::before {
+    left: 0;
+    border-left: calc(var(--tri) * 1.5) solid #B28B44;
+}
+.selection-line::after {
+    right: 0;
+    border-right: calc(var(--tri) * 1.5) solid #B28B44;
 }
 
 .roulette-tape {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    transform: translateY(75px);
     transition: transform 4s cubic-bezier(0.15, 0.85, 0.2, 1);
 }
 
+/* Высота элемента = высоте окна (задаётся из script.js), один приз занимает почти весь квадрат */
 .prize-item {
-    height: 150px;
+    width: 100%;
+    height: var(--item-h, 300px);
+    box-sizing: border-box;
+    padding: calc(var(--item-h, 300px) * 0.05) 4%;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -107,24 +141,24 @@ body::before {
 }
 
 .prize-item img {
-    width: 100px;
-    height: 100px;
+    height: calc(var(--item-h, 300px) * 0.68);
+    max-width: 92%;
+    width: auto;
     object-fit: contain;
 }
 
 .prize-item p {
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: calc(var(--item-h, 300px) * 0.025);
+    font-size: clamp(14px, 3.2dvh, 24px);
     font-weight: 600;
     color: #1E150D;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-align: center;
-    padding: 0 8px;
 }
 
 .spin-btn {
-    margin-top: 40px;
+    margin-top: clamp(16px, 4dvh, 40px);
     padding: 16px 40px;
     background-color: #1E150D;
     color: #fff;
