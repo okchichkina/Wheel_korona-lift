@@ -23,12 +23,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let prizes = [];
     
+    // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
+    // сбросится старый остаток и подтянется новый список призов.
+    const PRIZES_VERSION = '2';
+
+    if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
+        localStorage.removeItem('localPrizes');
+        localStorage.removeItem('wonPrizeId');
+        localStorage.setItem('prizesVersion', PRIZES_VERSION);
+    }
+
     const localStock = localStorage.getItem('localPrizes');
     if (localStock) {
         prizes = JSON.parse(localStock);
     } else {
         try {
-            const res = await fetch('prizes.json');
+            const res = await fetch('prizes.json', { cache: 'no-cache' });
             prizes = await res.json();
             localStorage.setItem('localPrizes', JSON.stringify(prizes));
         } catch (error) {

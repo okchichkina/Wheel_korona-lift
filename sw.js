@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wheel-offline-v3';
+const CACHE_NAME = 'wheel-offline-v5';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -11,6 +11,11 @@ const ASSETS_TO_CACHE = [
     './images/3.png',
     './images/4.png',
     './images/5.png',
+    './images/6.png',
+    './images/7.png',
+    './images/8.png',
+    './images/bg-1.jpg',
+    './images/bg-2.jpg',
     './images/icon-192.png'
 ];
 

@@ -6,14 +6,43 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html {
+    height: 100%;
     background-color: #FAFAFA;
-    height: 100vh;
+}
+
+body {
+    background-color: transparent;
+    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
     touch-action: none;
+}
+
+/* Фон на весь экран. Картинка 1 — горизонтальная ориентация (десктоп, телефон и планшет в ландшафте),
+   картинка 2 — вертикальная ориентация (телефон и планшет в портрете). */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background-color: #FAFAFA;
+    background-image: url('images/bg-1.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+@media (orientation: portrait) {
+    body::before {
+        background-image: url('images/bg-2.jpg');
+    }
 }
 
 .app-container {
@@ -90,6 +119,8 @@ body {
     color: #1E150D;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-align: center;
+    padding: 0 8px;
 }
 
 .spin-btn {
