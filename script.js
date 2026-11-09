@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const W = confettiCanvas.width = Math.round(window.innerWidth * dpr);
         const H = confettiCanvas.height = Math.round(window.innerHeight * dpr);
         const ctx = confettiCanvas.getContext('2d');
-        const colors = ['#FF4C00', '#D9B872', '#1E150D', '#F3E6C8', '#E8751A', '#FFFFFF'];
+        const colors = ['#FF4C00', '#FF7033', '#1E150D', '#F3E6C8', '#FF8D5C', '#FFFFFF'];
         const rand = (min, max) => min + Math.random() * (max - min);
         const parts = [];
 
