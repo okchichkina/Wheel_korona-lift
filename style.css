@@ -114,11 +114,11 @@ body::before {
 }
 .selection-line::before {
     left: 0;
-    border-left: calc(var(--tri) * 1.5) solid #B28B44;
+    border-left: calc(var(--tri) * 1.5) solid #FF4C00;
 }
 .selection-line::after {
     right: 0;
-    border-right: calc(var(--tri) * 1.5) solid #B28B44;
+    border-right: calc(var(--tri) * 1.5) solid #FF4C00;
 }
 
 .roulette-tape {
@@ -291,7 +291,7 @@ body::before {
     width: 0;
     margin: 14px auto 0;
     border-radius: 2px;
-    background: #B28B44;
+    background: #FF4C00;
 }
 
 /* ---- анимации появления (запускаются при показе окна) ---- */
