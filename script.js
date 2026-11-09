@@ -47,10 +47,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderTape() {
-        const cycle = prizes.length * ITEM_HEIGHT;
-        if (!cycle) return;
-        const m = ((pos % cycle) + cycle) % cycle;
-        tape.style.transform = `translate3d(0, ${START_OFFSET - m}px, 0)`;
+        const items = tape.children;
+        const n = items.length;
+        if (!n) return;
+        const H = ITEM_HEIGHT;
+        const cycle = n * H;
+        const dpr = window.devicePixelRatio || 1;
+        for (let i = 0; i < n; i++) {
+            // позиция приза i с «зацикливанием»: уезжает вверх и появляется снизу
+            let y = n === 1 ? 0 : ((((i * H - pos) + H) % cycle) + cycle) % cycle - H;
+            y += START_OFFSET;
+            // округляем до физических пикселей экрана: убирает мерцание и «рябь» на дробных координатах
+            y = Math.round(y * dpr) / dpr;
+            const el = items[i];
+            el.style.transform = `translate3d(0, ${y}px, 0)`;
+            el.style.visibility = (y > -H && y < WINDOW_HEIGHT) ? 'visible' : 'hidden';
+        }
     }
 
     function spinPosition(e) {
@@ -124,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
     // сбросится старый остаток и подтянется новый список призов.
-    const PRIZES_VERSION = '3';
+    const PRIZES_VERSION = '4';
 
     if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
         localStorage.removeItem('localPrizes');
@@ -148,33 +160,137 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Лента: 3 копии списка призов — этого хватает для бесшовного бесконечного цикла
-    let fullList = [];
-    for (let i = 0; i < 3; i++) fullList = fullList.concat(prizes);
-
+    // Лента: по одному элементу на приз. Каждый двигается отдельно и «зацикливается» в renderTape()
     tape.innerHTML = '';
-    fullList.forEach(prize => {
+    prizes.forEach(prize => {
         const div = document.createElement('div');
         div.className = 'prize-item';
-        div.innerHTML = `<img src="${prize.image}" alt="${prize.name}"><p>${prize.name}</p>`;
+        div.innerHTML = `<img src="${prize.image}" alt="" decoding="async">`;
         tape.appendChild(div);
     });
     updateSizes();
     renderTape();
+
+    // Ждём, пока картинки загрузятся и декодируются, чтобы анимация не «спотыкалась»
+    await Promise.all([...tape.querySelectorAll('img')].map(img =>
+        (img.decode ? img.decode() : Promise.resolve()).catch(() => {})
+    ));
     requestAnimationFrame(tick);
 
-    function showWinner(winner) {
+    // ===== Конфетти при показе выигрыша =====
+    const confettiCanvas = document.getElementById('confetti');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let confettiFrame = null;
+    let confettiTimer = null;
+
+    function stopConfetti() {
+        clearTimeout(confettiTimer);
+        if (confettiFrame) cancelAnimationFrame(confettiFrame);
+        confettiFrame = null;
+        const ctx = confettiCanvas.getContext('2d');
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+
+    function launchConfetti() {
+        if (reduceMotion) return;
+        stopConfetti();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const W = confettiCanvas.width = Math.round(window.innerWidth * dpr);
+        const H = confettiCanvas.height = Math.round(window.innerHeight * dpr);
+        const ctx = confettiCanvas.getContext('2d');
+        const colors = ['#B28B44', '#D9B872', '#1E150D', '#F3E6C8', '#E8751A', '#FFFFFF'];
+        const rand = (min, max) => min + Math.random() * (max - min);
+        const parts = [];
+
+        // пушка: n частиц из точки (x, y), направление angle (рад), разброс spread
+        function cannon(x, y, n, angle, spread, vMin, vMax) {
+            for (let i = 0; i < n; i++) {
+                const a = angle + rand(-spread, spread);
+                const v = rand(vMin, vMax) * dpr;
+                parts.push({
+                    x, y,
+                    vx: Math.cos(a) * v,
+                    vy: Math.sin(a) * v,
+                    size: rand(6, 12) * dpr,
+                    rot: rand(0, Math.PI * 2),
+                    vr: rand(-8, 8),
+                    flip: rand(0, Math.PI * 2),
+                    vf: rand(4, 10),
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    round: Math.random() < 0.25,
+                    life: rand(2.6, 4.2),
+                    age: 0
+                });
+            }
+        }
+
+        // два выстрела снизу слева и справа внутрь + россыпь сверху
+        const up = -Math.PI / 2;
+        cannon(0, H * 0.95, 70, up + 0.55, 0.35, 700, 1250);
+        cannon(W, H * 0.95, 70, up - 0.55, 0.35, 700, 1250);
+        for (let i = 0; i < 50; i++) cannon(rand(0, W), -20 * dpr, 1, Math.PI / 2, 0.4, 120, 380);
+
+        const gravity = 1300 * dpr;
+        let last = performance.now();
+        function frame(now) {
+            const dt = Math.min((now - last) / 1000, 0.05);
+            last = now;
+            ctx.clearRect(0, 0, W, H);
+            let alive = 0;
+            for (const p of parts) {
+                p.age += dt;
+                if (p.age >= p.life || p.y > H + 40 * dpr) continue;
+                alive++;
+                p.vy += gravity * dt;
+                p.vx *= (1 - 1.4 * dt);
+                p.vy *= (1 - 0.6 * dt);
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.rot += p.vr * dt;
+                p.flip += p.vf * dt;
+                const fade = Math.min(1, (p.life - p.age) / 0.8);
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, fade);
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.scale(1, Math.cos(p.flip));
+                ctx.fillStyle = p.color;
+                if (p.round) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.66);
+                }
+                ctx.restore();
+            }
+            if (alive > 0) {
+                confettiFrame = requestAnimationFrame(frame);
+            } else {
+                confettiFrame = null;
+                ctx.clearRect(0, 0, W, H);
+            }
+        }
+        confettiFrame = requestAnimationFrame(frame);
+    }
+
+    function showWinner(winner, celebrate = true) {
         resultImg.src = winner.image;
         resultName.innerText = winner.name;
         overlay.classList.add('active');
         btn.classList.add('hidden');
+        if (celebrate) {
+            // конфетти запускается, когда приз «выпрыгивает» на экран
+            confettiTimer = setTimeout(launchConfetti, 600);
+            if (navigator.vibrate) navigator.vibrate([40, 60, 40]);
+        }
     }
 
     if (!isIPadMode) {
         const savedWinId = localStorage.getItem('wonPrizeId');
         if (savedWinId) {
             const savedWinner = prizes.find(p => p.id === savedWinId);
-            if (savedWinner) showWinner(savedWinner);
+            if (savedWinner) showWinner(savedWinner, false);
         }
     }
 
@@ -252,6 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     closeBtn.addEventListener('click', () => {
+        stopConfetti();
         overlay.classList.remove('active');
         btn.classList.remove('hidden');
         mode = 'idle';   // лента снова плавно начинает медленно крутиться

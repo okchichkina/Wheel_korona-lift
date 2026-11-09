@@ -1,10 +1,13 @@
 [
-  { "id": "thermomug",      "name": "ТЕРМОКРУЖКА",          "amount": 24,  "weight": 0.8, "image": "images/1.png" },
-  { "id": "notebook-orange","name": "БЛОКНОТ ОРАНЖЕВЫЙ",    "amount": 600, "weight": 1.0, "image": "images/2.png" },
-  { "id": "notebook-brick", "name": "БЛОКНОТ КИРПИЧНЫЙ",    "amount": 60,  "weight": 0.8, "image": "images/3.png" },
-  { "id": "charging-station","name": "СТАНЦИЯ ДЛЯ ЗАРЯДКИ", "amount": 2,   "weight": 0.3, "image": "images/4.png" },
-  { "id": "power-bank",     "name": "ЗАРЯДНЫЙ БЛОК",        "amount": 9,   "weight": 0.5, "image": "images/5.png" },
-  { "id": "magsafe",        "name": "ЗАРЯДКА С МАГСЕЙФ",    "amount": 10,  "weight": 0.5, "image": "images/6.png" },
-  { "id": "umbrella",       "name": "ЗОНТ",                 "amount": 20,  "weight": 0.8, "image": "images/7.png" },
-  { "id": "travel-set",     "name": "ДОРОЖНЫЙ НАБОР",       "amount": 10,  "weight": 0.5, "image": "images/8.png" }
+  { "id": "thermomug", "name": "ТЕРМОКРУЖКА", "amount": 31, "weight": 1.0, "image": "images/1.png" },
+  { "id": "notebook-brick", "name": "БЛОКНОТ КИРПИЧНЫЙ", "amount": 60, "weight": 1.0, "image": "images/3.png" },
+  { "id": "charging-station", "name": "СТАНЦИЯ ДЛЯ ЗАРЯДКИ", "amount": 2, "weight": 1.0, "image": "images/4.png" },
+  { "id": "power-bank-cable", "name": "ПОВЕРБАНК С ПРОВОДОМ", "amount": 19, "weight": 1.0, "image": "images/5.png" },
+  { "id": "umbrella", "name": "ЗОНТ LINVOL", "amount": 15, "weight": 1.0, "image": "images/7.png" },
+  { "id": "travel-set", "name": "ДОРОЖНЫЙ НАБОР", "amount": 10, "weight": 1.0, "image": "images/8.png" },
+  { "id": "embroidery", "name": "КИТАЙСКАЯ ВЫШИВКА В ЧЕМОДАНЧИКЕ", "amount": 5, "weight": 1.0, "image": "images/9.png" },
+  { "id": "nightlight", "name": "НОЧНИК", "amount": 20, "weight": 1.0, "image": "images/10.png" },
+  { "id": "tea", "name": "ЧАЙ", "amount": 20, "weight": 1.0, "image": "images/11.png" },
+  { "id": "phone-stand", "name": "ПОДСТАВКА ПОД ТЕЛЕФОН", "amount": 20, "weight": 1.0, "image": "images/12.png" },
+  { "id": "shopper", "name": "ШОППЕР", "amount": 18, "weight": 1.0, "image": "images/13.png" }
 ]

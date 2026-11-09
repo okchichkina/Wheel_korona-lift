@@ -65,6 +65,7 @@ body::before {
     background: #fff;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    isolation: isolate;
 }
 
 /* Горизонтальная ориентация (десктоп, телефон и планшет в ландшафте): окно шире */
@@ -121,19 +122,24 @@ body::before {
 }
 
 .roulette-tape {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    will-change: transform;
+    height: 100%;
 }
 
 /* Высота элемента = высоте окна (задаётся из script.js), один приз занимает почти весь квадрат */
 .prize-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+    backface-visibility: hidden;
     width: 100%;
     height: var(--item-h, 300px);
     box-sizing: border-box;
-    padding: calc(var(--item-h, 300px) * 0.05) 4%;
+    padding: calc(var(--item-h, 300px) * 0.06) 4%;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -141,20 +147,10 @@ body::before {
 }
 
 .prize-item img {
-    height: calc(var(--item-h, 300px) * 0.68);
+    height: calc(var(--item-h, 300px) * 0.8);
     max-width: 92%;
     width: auto;
     object-fit: contain;
-}
-
-.prize-item p {
-    margin-top: calc(var(--item-h, 300px) * 0.025);
-    font-size: clamp(14px, 3.2dvh, 24px);
-    font-weight: 600;
-    color: #1E150D;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-align: center;
 }
 
 .spin-btn {
@@ -179,16 +175,27 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #FAFAFA;
+    background: radial-gradient(circle at 50% 45%, #FFFFFF 0%, #F8F1E3 55%, #EBDDC2 100%);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.5s ease-in-out;
+    overflow: hidden;
+    transition: opacity 0.6s ease-in-out;
 }
 .overlay.active { opacity: 1; pointer-events: auto; }
+
+.confetti {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
 
 .close-btn {
     position: absolute;
@@ -207,12 +214,138 @@ body::before {
 .close-btn.visible { display: block; }
 
 .result-content {
+    position: relative;
+    z-index: 2;
     text-align: center;
-    transform: scale(0.8);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
 }
-.overlay.active .result-content { transform: scale(1); }
 
-.result-title { font-size: 28px; color: #1E150D; margin-bottom: 30px; letter-spacing: 2px; }
-.result-image { width: 200px; height: 200px; object-fit: contain; margin-bottom: 20px; }
-.result-name { font-size: 24px; color: #1E150D; letter-spacing: 1px; }
+.result-title {
+    font-size: clamp(22px, 4.2dvh, 34px);
+    color: #1E150D;
+    margin-bottom: clamp(16px, 3dvh, 32px);
+    letter-spacing: 2px;
+    opacity: 0;
+}
+
+/* Сцена с призом: лучи и свечение за фото, плавное «парение» */
+.result-stage {
+    --size: min(66vw, 44dvh, 380px);
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+}
+
+.result-image {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    filter: drop-shadow(0 18px 24px rgba(30, 21, 13, 0.22));
+}
+
+.result-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150%;
+    height: 150%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(178, 139, 68, 0.38) 0%, rgba(178, 139, 68, 0) 62%);
+    opacity: 0;
+    z-index: 0;
+}
+
+.result-rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 260%;
+    height: 260%;
+    margin: -130% 0 0 -130%;
+    background: repeating-conic-gradient(from 0deg, rgba(178, 139, 68, 0.24) 0deg 9deg, rgba(178, 139, 68, 0) 9deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.6) 22%, transparent 52%);
+    mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.6) 22%, transparent 52%);
+    opacity: 0;
+    z-index: 0;
+}
+
+.result-name {
+    position: relative;
+    font-size: clamp(20px, 3.6dvh, 30px);
+    color: #1E150D;
+    letter-spacing: 1px;
+    margin-top: clamp(16px, 3dvh, 30px);
+    max-width: 90vw;
+    opacity: 0;
+}
+.result-name::after {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 0;
+    margin: 14px auto 0;
+    border-radius: 2px;
+    background: #B28B44;
+}
+
+/* ---- анимации появления (запускаются при показе окна) ---- */
+.overlay.active .result-title { animation: titleIn 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both; }
+.overlay.active .result-image { animation: prizePop 1.2s cubic-bezier(0.2, 0.9, 0.25, 1) 0.4s both; }
+.overlay.active .result-stage { animation: prizeFloat 3.6s ease-in-out 1.8s infinite; }
+.overlay.active .result-glow  { animation: glowIn 1.2s ease-out 0.5s both, glowPulse 3s ease-in-out 1.7s infinite; }
+.overlay.active .result-rays  { animation: raysIn 1.6s ease-out 0.5s both, raysSpin 40s linear infinite; }
+.overlay.active .result-name  { animation: nameIn 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 1s both; }
+.overlay.active .result-name::after { animation: lineGrow 0.9s ease-out 1.5s both; }
+
+@keyframes titleIn {
+    from { opacity: 0; transform: translateY(-24px); letter-spacing: 12px; }
+    to   { opacity: 1; transform: translateY(0); letter-spacing: 2px; }
+}
+@keyframes prizePop {
+    0%   { opacity: 0; transform: scale(0.15) rotate(-14deg); }
+    55%  { opacity: 1; transform: scale(1.14) rotate(3deg); }
+    78%  { transform: scale(0.96) rotate(-1deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes prizeFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+@keyframes glowIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes glowPulse {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50%      { opacity: 0.7; transform: translate(-50%, -50%) scale(1.08); }
+}
+@keyframes raysIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+@keyframes raysSpin {
+    to { transform: rotate(360deg); }
+}
+@keyframes nameIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lineGrow {
+    from { width: 0; }
+    to   { width: 90px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .overlay.active .result-stage,
+    .overlay.active .result-glow,
+    .overlay.active .result-rays { animation-iteration-count: 1; }
+    .overlay.active .result-rays { animation: raysIn 0.6s ease-out both; }
+    .overlay.active .result-glow { animation: glowIn 0.6s ease-out both; }
+    .overlay.active .result-stage { animation: none; }
+}
