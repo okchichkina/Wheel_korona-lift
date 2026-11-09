@@ -350,32 +350,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 0;
     }
 
-btn.addEventListener('click', () => {
+btn.addEventListener('click', async () => {
         if (mode !== 'idle') return;
         btn.classList.add('hidden');
+
+        // 1. Загружаем актуальные остатки перед вращением
+        try {
+            const res = await fetch('http://ВАШ_IP_ИЛИ_ДОМЕН:8000/api/prizes');
+            if (res.ok) {
+                prizes = await res.json();
+            }
+        } catch (e) {
+            console.warn("Не удалось обновить остатки с сервера, используем локальные", e);
+        }
+
+        // 2. Выбираем приз локально в JS (как вы и просили)
         const winnerIndex = getWinnerIndex();
         const winner = prizes[winnerIndex];
 
         if (!isIPadMode) localStorage.setItem('wonPrizeId', winner.id);
 
-        saveOfflineSpin(winner.id);
-        syncWithServer();
+        // 3. Отправляем на сервер команду списать 1 штуку выбранного приза
+        try {
+            await fetch('http://ВАШ_IP_ИЛИ_ДОМЕН:8000/api/record_win', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prize_id: winner.id })
+            });
+        } catch (e) {
+            console.error("Не удалось записать результат на сервер", e);
+            // Если нет интернета, можно сохранить локально (как у вас было реализовано ранее)
+            saveOfflineSpin(winner.id);
+        }
 
+        // 4. Запускаем колесо
         startSpin(winnerIndex, () => {
-            showWinner(winner); // Показываем выигрыш и запускаем конфетти
+            showWinner(winner); 
             
             if (!isIPadMode) {
-                // Запускаем таймер на 10 секунд (10000 миллисекунд)
                 setTimeout(() => {
-                    // Проверяем, что мы открыты внутри Telegram Web App
+                    notifyTelegramBot(winner.name);
                     if (window.Telegram && window.Telegram.WebApp) {
-                        window.Telegram.WebApp.sendData(String(winner.id));
+                        window.Telegram.WebApp.close();
                     }
                 }, 10000);
             }
         });
     });
-
     closeBtn.addEventListener('click', () => {
         stopConfetti();
         overlay.classList.remove('active');
