@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
     // сбросится старый остаток и подтянется новый список призов.
-    const PRIZES_VERSION = '5';
+    const PRIZES_VERSION = '6';
 
     if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
         localStorage.removeItem('localPrizes');
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const W = confettiCanvas.width = Math.round(window.innerWidth * dpr);
         const H = confettiCanvas.height = Math.round(window.innerHeight * dpr);
         const ctx = confettiCanvas.getContext('2d');
-        const colors = ['#B28B44', '#D9B872', '#1E150D', '#F3E6C8', '#E8751A', '#FFFFFF'];
+        const colors = ['#FF4C00', '#D9B872', '#1E150D', '#F3E6C8', '#E8751A', '#FFFFFF'];
         const rand = (min, max) => min + Math.random() * (max - min);
         const parts = [];
 
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function notifyTelegramBot(prizeName) {
         if (!userChatId || TELEGRAM_BOT_TOKEN === 'ВАШ_ТОКЕН_БОТА_ОТ_BOTFATHER') return;
-        const message = `Поздравляем! Ваш приз: ${prizeName}. Подойдите на стойку Midea | Linvol, чтобы его получить.`;
+        const message = `Поздравляем! Ваш приз: ${prizeName}. Подойдите на стойку Linvol, чтобы его получить.`;
         
         try {
             await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
