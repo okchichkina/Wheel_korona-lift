@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
     // сбросится старый остаток и подтянется новый список призов.
-    const PRIZES_VERSION = '4';
+    const PRIZES_VERSION = '5';
 
     if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
         localStorage.removeItem('localPrizes');
