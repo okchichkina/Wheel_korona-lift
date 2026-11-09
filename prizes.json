@@ -7,6 +7,6 @@
   { "id": "shopper", "name": "ШОППЕР", "amount": 18, "weight": 1.0, "image": "images/6.png" },
   { "id": "tea", "name": "ЧАЙ", "amount": 20, "weight": 1.0, "image": "images/7.png" },
   { "id": "phone-stand", "name": "ПОДСТАВКА ПОД ТЕЛЕФОН", "amount": 20, "weight": 1.0, "image": "images/8.png" },
-  { "id": "tea", "name": "АВТО-ВИЗИТНИЦА", "amount": 60, "weight": 1.0, "image": "images/9.png" },
-  { "id": "phone-stand", "name": "ЧАЙНЫЙ НАБОР", "amount": 20, "weight": 1.0, "image": "images/10.png" }
+  { "id": "auto", "name": "АВТО-ВИЗИТНИЦА", "amount": 60, "weight": 1.0, "image": "images/9.png" },
+  { "id": "tea-cup", "name": "ЧАЙНЫЙ НАБОР", "amount": 20, "weight": 1.0, "image": "images/10.png" }
 ]
