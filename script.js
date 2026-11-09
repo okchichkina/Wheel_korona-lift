@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 0;
     }
 
-    btn.addEventListener('click', () => {
+btn.addEventListener('click', () => {
         if (mode !== 'idle') return;
         btn.classList.add('hidden');
         const winnerIndex = getWinnerIndex();
@@ -362,8 +362,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         syncWithServer();
 
         startSpin(winnerIndex, () => {
-            showWinner(winner);
-            if (!isIPadMode) notifyTelegramBot(winner.name);
+            showWinner(winner); // Показываем выигрыш и запускаем конфетти
+            
+            if (!isIPadMode) {
+                // Запускаем таймер на 10 секунд (10000 миллисекунд)
+                setTimeout(() => {
+                    // Проверяем, что мы открыты внутри Telegram Web App
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.sendData(String(winner.id));
+                    }
+                }, 10000);
+            }
         });
     });
 
