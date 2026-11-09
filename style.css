@@ -256,7 +256,7 @@ body::before {
     width: 150%;
     height: 150%;
     transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(178, 139, 68, 0.38) 0%, rgba(178, 139, 68, 0) 62%);
+    background: radial-gradient(circle, rgba(255, 76, 0, 0.38) 0%, rgba(255, 76, 0, 0) 62%);
     opacity: 0;
     z-index: 0;
 }
@@ -268,7 +268,7 @@ body::before {
     width: 260%;
     height: 260%;
     margin: -130% 0 0 -130%;
-    background: repeating-conic-gradient(from 0deg, rgba(178, 139, 68, 0.24) 0deg 9deg, rgba(178, 139, 68, 0) 9deg 18deg);
+    background: repeating-conic-gradient(from 0deg, rgba(255, 76, 0, 0.24) 0deg 9deg, rgba(255, 76, 0, 0) 9deg 18deg);
     -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.6) 22%, transparent 52%);
     mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.6) 22%, transparent 52%);
     opacity: 0;
