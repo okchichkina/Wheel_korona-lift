@@ -4,7 +4,7 @@
   { "id": "charging-station", "name": "СТАНЦИЯ ДЛЯ ЗАРЯДКИ", "amount": 2, "weight": 1.0, "image": "images/3.png" },
   { "id": "power-bank-cable", "name": "ПОВЕРБАНК С ПРОВОДОМ", "amount": 19, "weight": 1.0, "image": "images/4.png" },
   { "id": "umbrella", "name": "ЗОНТ LINVOL", "amount": 15, "weight": 1.0, "image": "images/5.png" },
-  { "id": "shopper", "name": "ШОППЕР", "amount": 18, "weight": 1.0, "image": "images/6.png" }
+  { "id": "shopper", "name": "ШОППЕР", "amount": 18, "weight": 1.0, "image": "images/6.png" },
   { "id": "tea", "name": "ЧАЙ", "amount": 20, "weight": 1.0, "image": "images/7.png" },
   { "id": "phone-stand", "name": "ПОДСТАВКА ПОД ТЕЛЕФОН", "amount": 20, "weight": 1.0, "image": "images/8.png" }
 ]
