@@ -1,0 +1,258 @@
+diff --git a/prizes.json b/prizes.json
+index 9909105..e869343 100644
+--- a/prizes.json
++++ b/prizes.json
+@@ -7,6 +7,6 @@
+   { "id": "shopper", "name": "ШОППЕР", "amount": 18, "weight": 1.0, "image": "images/6.png" },
+   { "id": "tea", "name": "ЧАЙ", "amount": 20, "weight": 1.0, "image": "images/7.png" },
+   { "id": "phone-stand", "name": "ПОДСТАВКА ПОД ТЕЛЕФОН", "amount": 20, "weight": 1.0, "image": "images/8.png" },
+-  { "id": "tea", "name": "АВТО-ВИЗИТНИЦА", "amount": 60, "weight": 1.0, "image": "images/9.png" },
+-  { "id": "phone-stand", "name": "ЧАЙНЫЙ НАБОР", "amount": 20, "weight": 1.0, "image": "images/10.png" }
++  { "id": "card-holder", "name": "АВТО-ВИЗИТНИЦА", "amount": 60, "weight": 1.0, "image": "images/9.png" },
++  { "id": "tea-set", "name": "ЧАЙНЫЙ НАБОР", "amount": 20, "weight": 1.0, "image": "images/10.png" }
+ ]
+diff --git a/script.js b/script.js
+index 7989b76..ab161c0 100644
+--- a/script.js
++++ b/script.js
+@@ -129,33 +129,36 @@ document.addEventListener('DOMContentLoaded', async () => {
+     
+     const urlParams = new URLSearchParams(window.location.search);
+     const isIPadMode = window.matchMedia('(display-mode: standalone)').matches || urlParams.has('ipad');
+-    const userChatId = urlParams.get('chat_id'); 
+-
+-    // ВСТАВЬТЕ СЮДА ТОКЕН ВАШЕГО БОТА
+-    const TELEGRAM_BOT_TOKEN = 'ВАШ_ТОКЕН_БОТА_ОТ_BOTFATHER';
+-
+-    // Меняйте это значение при каждом изменении prizes.json — тогда у всех устройств
+-    // сбросится старый остаток и подтянется новый список призов.
+-    const PRIZES_VERSION = '8';
+-
+-    if (localStorage.getItem('prizesVersion') !== PRIZES_VERSION) {
+-        localStorage.removeItem('localPrizes');
+-        localStorage.removeItem('wonPrizeId');
+-        localStorage.setItem('prizesVersion', PRIZES_VERSION);
++    const tg = window.Telegram && window.Telegram.WebApp;
++    const initData = (tg && tg.initData) || '';   // подписанные Telegram данные участника (пусто вне Telegram)
++
++    // Остатки и выигрыши теперь хранит сервер; убираем старые локальные копии склада
++    ['localPrizes', 'wonPrizeId', 'syncQueue', 'prizesVersion'].forEach(k => localStorage.removeItem(k));
++
++    // Ключ стойки для iPad: приходит в ссылке ?ipad&key=... или вводится один раз.
++    // (Приложение с экрана «Домой» на iPad не видит хранилище Safari, поэтому может спросить ещё раз.)
++    if (urlParams.get('key')) localStorage.setItem('boothKey', urlParams.get('key'));
++    function boothKey() {
++        let key = localStorage.getItem('boothKey');
++        if (!key) {
++            key = (prompt('Ключ стойки (выдаёт организатор):') || '').trim();
++            if (key) localStorage.setItem('boothKey', key);
++        }
++        return key || '';
+     }
+ 
+-    const localStock = localStorage.getItem('localPrizes');
+-    if (localStock) {
+-        prizes = JSON.parse(localStock);
+-    } else {
++    // Список призов для ленты. Сам приз выбирает сервер (api/spin), а не браузер.
++    try {
++        const res = await fetch('api/prizes', { cache: 'no-store' });
++        if (!res.ok) throw new Error(res.status);
++        prizes = await res.json();
++    } catch (error) {
++        console.error('Сервер недоступен, показываем призы из prizes.json', error);
+         try {
+             const res = await fetch('prizes.json', { cache: 'no-cache' });
+             prizes = await res.json();
+-            // Запоминаем стартовое количество: шанс приза считается от него и не меняется по мере раздачи
+-            prizes.forEach(p => { p.initialAmount = p.amount; });
+-            localStorage.setItem('localPrizes', JSON.stringify(prizes));
+-        } catch (error) {
+-            console.error('Ошибка загрузки', error);
++        } catch (e) {
++            console.error('Ошибка загрузки', e);
+             return;
+         }
+     }
+@@ -171,10 +174,14 @@ document.addEventListener('DOMContentLoaded', async () => {
+     updateSizes();
+     renderTape();
+ 
+-    // Ждём, пока картинки загрузятся и декодируются, чтобы анимация не «спотыкалась»
+-    await Promise.all([...tape.querySelectorAll('img')].map(img =>
+-        (img.decode ? img.decode() : Promise.resolve()).catch(() => {})
+-    ));
++    // Ждём, пока картинки загрузятся и декодируются, чтобы анимация не «спотыкалась»,
++    // но не дольше 3 секунд: на медленном телефоне кнопка не должна «зависать»
++    await Promise.race([
++        Promise.all([...tape.querySelectorAll('img')].map(img =>
++            (img.decode ? img.decode() : Promise.resolve()).catch(() => {})
++        )),
++        new Promise(resolve => setTimeout(resolve, 3000)),
++    ]);
+     requestAnimationFrame(tick);
+ 
+     // ===== Конфетти при показе выигрыша =====
+@@ -286,92 +293,70 @@ document.addEventListener('DOMContentLoaded', async () => {
+         }
+     }
+ 
+-    if (!isIPadMode) {
+-        const savedWinId = localStorage.getItem('wonPrizeId');
+-        if (savedWinId) {
+-            const savedWinner = prizes.find(p => p.id === savedWinId);
+-            if (savedWinner) showWinner(savedWinner, false);
+-        }
+-    }
+-
+-    if (isIPadMode) closeBtn.classList.add('visible');
+-
+-    async function notifyTelegramBot(prizeName) {
+-        if (!userChatId || TELEGRAM_BOT_TOKEN === 'ВАШ_ТОКЕН_БОТА_ОТ_BOTFATHER') return;
+-        const message = `Поздравляем! Ваш приз: ${prizeName}. Подойдите на стойку Linvol, чтобы его получить.`;
+-        
+-        try {
+-            await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+-                method: 'POST',
+-                headers: { 'Content-Type': 'application/json' },
+-                body: JSON.stringify({ chat_id: userChatId, text: message })
+-            });
+-        } catch (err) {
+-            console.error('Ошибка TG:', err);
+-        }
++    const ERRORS = {
++        not_registered: 'Сначала пройдите все шаги в боте, а потом откройте колесо из бота.',
++        out_of_stock: 'Все призы уже разыграны. Спасибо за участие!',
++        bad_booth_key: 'Неверный ключ стойки. Нажмите «Крутить» и введите его заново.',
++        bad_init_data: 'Откройте колесо через кнопку в боте.',
++        no_credentials: 'Откройте колесо через кнопку в боте.',
++        expired: 'Ссылка устарела: откройте колесо из бота ещё раз.',
++    };
++
++    function notify(text) {
++        if (tg && initData && tg.showAlert) tg.showAlert(text); else alert(text);
+     }
+ 
+-    function saveOfflineSpin(prizeId) {
+-        let queue = JSON.parse(localStorage.getItem('syncQueue')) || [];
+-        queue.push({ id: prizeId, timestamp: Date.now() });
+-        localStorage.setItem('syncQueue', JSON.stringify(queue));
+-        
+-        const prizeToUpdate = prizes.find(p => p.id === prizeId);
+-        if(prizeToUpdate) prizeToUpdate.amount -= 1;
+-        localStorage.setItem('localPrizes', JSON.stringify(prizes));
++    async function postJson(url, body) {
++        const res = await fetch(url, {
++            method: 'POST',
++            headers: { 'Content-Type': 'application/json' },
++            body: JSON.stringify(body),
++        });
++        const data = await res.json().catch(() => ({}));
++        if (!res.ok) throw new Error(data.detail || 'network');
++        return data;
+     }
+ 
+-    async function syncWithServer() {
+-        if (!navigator.onLine) return;
+-        let queue = JSON.parse(localStorage.getItem('syncQueue')) || [];
+-        if (queue.length === 0) return;
++    // Уже крутил? Показываем его приз: сервер помнит, с какого бы устройства он ни открыл колесо
++    if (!isIPadMode && initData) {
+         try {
+-            // await fetch('https://your-server.com/api/sync', { ... });
+-            console.log('Синхронизация успешна!', queue.length);
+-            localStorage.removeItem('syncQueue');
+-        } catch (err) {}
+-    }
+-    window.addEventListener('online', syncWithServer);
+-
+-    function getWinnerIndex() {
+-        const available = prizes.filter(p => p.amount > 0);
+-        if (available.length === 0) return 0;
+-        
+-        // Шанс = стартовое количество × вес. Он постоянный: когда блокноты убывают,
+-        // шансы редких призов НЕ растут. Закончившийся приз просто исключается.
+-        const chance = p => (p.initialAmount ?? p.amount) * p.weight;
+-        const totalWeight = available.reduce((sum, p) => sum + chance(p), 0);
+-        let randomValue = Math.random() * totalWeight;
+-
+-        for (let i = 0; i < available.length; i++) {
+-            randomValue -= chance(available[i]);
+-            if (randomValue <= 0) return prizes.findIndex(p => p.id === available[i].id);
+-        }
+-        return 0;
++            const data = await postJson('api/my_prize', { init_data: initData });
++            if (data.prize) showWinner(prizes.find(p => p.id === data.prize.id) || data.prize, false);
++        } catch (e) { /* нет связи: просто показываем колесо */ }
+     }
+ 
+-btn.addEventListener('click', () => {
+-        if (mode !== 'idle') return;
+-        btn.classList.add('hidden');
+-        const winnerIndex = getWinnerIndex();
+-        const winner = prizes[winnerIndex];
++    if (isIPadMode) closeBtn.classList.add('visible');
+ 
+-        if (!isIPadMode) localStorage.setItem('wonPrizeId', winner.id);
++    let busy = false;
++    btn.addEventListener('click', async () => {
++        if (mode !== 'idle' || busy) return;
++        busy = true;
++        btn.classList.add('hidden');
+ 
+-        saveOfflineSpin(winner.id);
+-        syncWithServer();
++        // Приз выбирает и списывает со склада сервер: закончившийся приз выпасть не может
++        let result;
++        try {
++            result = await postJson('api/spin', isIPadMode ? { booth_key: boothKey() } : { init_data: initData });
++        } catch (err) {
++            if (err.message === 'bad_booth_key') localStorage.removeItem('boothKey');
++            notify(ERRORS[err.message] || 'Нет связи с сервером, попробуйте ещё раз.');
++            btn.classList.remove('hidden');
++            busy = false;
++            return;
++        }
++        busy = false;
+ 
++        const winner = prizes.find(p => p.id === result.prize.id) || result.prize;
++        if (result.already) {           // уже крутил раньше: просто показываем его приз
++            showWinner(winner, false);
++            return;
++        }
++        const winnerIndex = Math.max(0, prizes.findIndex(p => p.id === winner.id));
+         startSpin(winnerIndex, () => {
+             showWinner(winner); // Показываем выигрыш и запускаем конфетти
+-            
+-            if (!isIPadMode) {
+-                // Запускаем таймер на 10 секунд (10000 миллисекунд)
+-                setTimeout(() => {
+-                    // Проверяем, что мы открыты внутри Telegram Web App
+-                    if (window.Telegram && window.Telegram.WebApp) {
+-                        window.Telegram.WebApp.sendData(String(winner.id));
+-                    }
+-                }, 10000);
++            if (!isIPadMode && initData) {
++                // Через 10 секунд закрываем колесо: бот сам пришлёт сообщение с призом
++                setTimeout(() => tg.sendData(String(winner.id)), 10000);
+             }
+         });
+     });
+diff --git a/sw.js b/sw.js
+index 08e9dc2..e0b7dec 100644
+--- a/sw.js
++++ b/sw.js
+@@ -1,4 +1,4 @@
+-const CACHE_NAME = 'wheel-offline-v11';
++const CACHE_NAME = 'wheel-offline-v12';
+ const ASSETS_TO_CACHE = [
+     './',
+     './index.html',
+@@ -22,5 +22,7 @@ self.addEventListener('install', event => {
+ });
+ 
+ self.addEventListener('fetch', event => {
++    // Запросы к серверу розыгрыша (api/...) не кэшируем и не подменяем: только напрямую
++    if (new URL(event.request.url).pathname.includes('/api/')) return;
+     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+ });
